@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\OrderDetail;
+use App\Models\Order_detail;
 
 class Order_detailController extends Controller
 {
