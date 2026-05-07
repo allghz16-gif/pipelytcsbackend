@@ -1,38 +1,37 @@
 <?php
-
 namespace App\Http\Controllers;
 
+use App\Models\Product;
+use App\Models\Sale;
 use Illuminate\Http\Request;
-use App\Models\Product;          // ← tambah ini
 
-class ProductController extends Controller
-{
-    public function index()
-    {
-        return response()->json(Product::all());
+class ProductController extends Controller {
+
+    // GET /api/products
+    public function index(Request $request) {
+        $userId = $request->user()->id;
+        $data = Sale::where('sales.user_id', $userId)
+            ->whereMonth('sold_at', now()->month)
+            ->join('platforms', 'sales.platform_id', '=', 'platforms.id')
+            ->selectRaw('product_name, platforms.name as platform,
+                platforms.color as platform_color,
+                SUM(quantity) as units_sold,
+                SUM(total_revenue) as revenue')
+            ->groupBy('product_name', 'platforms.name', 'platforms.color')
+            ->orderByDesc('revenue')
+            ->get();
+        return response()->json($data);
     }
 
-    public function show($id)
-    {
-        return response()->json(Product::findOrFail($id));
-    }
-
-    public function store(Request $request)
-    {
-        $product = Product::create($request->all());
-        return response()->json($product, 201);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $product = Product::findOrFail($id);
-        $product->update($request->all());
-        return response()->json($product);
-    }
-
-    public function destroy($id)
-    {
-        Product::findOrFail($id)->delete();
-        return response()->json(['message' => 'Deleted!']);
+    // GET /api/products/heatmap
+    public function heatmap(Request $request) {
+        $userId = $request->user()->id;
+        $data = Sale::where('user_id', $userId)
+            ->where('sold_at', '>=', now()->subDays(30))
+            ->selectRaw('HOUR(sold_at) as hour, COUNT(*) as sales_count')
+            ->groupBy('hour')
+            ->orderBy('hour')
+            ->get();
+        return response()->json($data);
     }
 }

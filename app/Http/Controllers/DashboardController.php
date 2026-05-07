@@ -1,134 +1,94 @@
 <?php
-
 namespace App\Http\Controllers;
 
+use App\Models\Sale;
 use Illuminate\Http\Request;
-use App\Models\Order;
-use App\Models\Order_detail;
-use App\Models\Product;
-use App\Models\Platform;
-use Illuminate\Support\Facades\DB;
 
-class DashboardController extends Controller
-{
-    // 1. Summary — Total Sales, Sales Growth, Units Sold, AOV
-    public function summary()
-    {
-        $totalSalesThisMonth = Order::whereMonth('tanggal', now()->month)
-            ->sum('total_harga');
+class DashboardController extends Controller {
 
-        $totalSalesLastMonth = Order::whereMonth('tanggal', now()->subMonth()->month)
-            ->sum('total_harga');
+    // GET /api/dashboard/overview
+    public function overview(Request $request) {
+        $userId = $request->user()->id;
 
-        $salesGrowth = $totalSalesLastMonth > 0
-            ? (($totalSalesThisMonth - $totalSalesLastMonth) / $totalSalesLastMonth) * 100
+        $thisMonth = Sale::where('user_id', $userId)
+            ->whereMonth('sold_at', now()->month)
+            ->whereYear('sold_at', now()->year);
+
+        $lastMonth = Sale::where('user_id', $userId)
+            ->whereMonth('sold_at', now()->subMonth()->month)
+            ->whereYear('sold_at', now()->subMonth()->year);
+
+        $totalSales  = $thisMonth->sum('total_revenue');
+        $lastSales   = $lastMonth->sum('total_revenue');
+        $salesGrowth = $lastSales > 0
+            ? round((($totalSales - $lastSales) / $lastSales) * 100, 1)
             : 0;
 
-        $unitsSold = Order_detail::whereHas('order', function ($q) {
-            $q->whereMonth('tanggal', now()->month);
-        })->sum('qty');
-
-        $totalOrders = Order::whereMonth('tanggal', now()->month)->count();
-        $aov = $totalOrders > 0 ? $totalSalesThisMonth / $totalOrders : 0;
-
         return response()->json([
-            'total_sales'  => $totalSalesThisMonth,
-            'sales_growth' => round($salesGrowth, 2),
-            'units_sold'   => $unitsSold,
-            'aov'          => round($aov, 2),
-            'total_orders' => $totalOrders,
+            'total_sales'     => $totalSales,
+            'sales_growth'    => $salesGrowth,
+            'units_sold'      => $thisMonth->sum('quantity'),
+            'avg_order_value' => $thisMonth->count() > 0
+                ? round($totalSales / $thisMonth->count(), 0) : 0,
         ]);
     }
 
-    // 2. Sales Trend 30 hari
-    public function salesTrend()
-    {
-        $trend = Order::select(
-                DB::raw('DATE(tanggal) as date'),
-                DB::raw('SUM(total_harga) as total')
-            )
-            ->where('tanggal', '>=', now()->subDays(30))
+    // GET /api/dashboard/sales-trend
+    public function salesTrend(Request $request) {
+        $userId = $request->user()->id;
+        $data = Sale::where('user_id', $userId)
+            ->where('sold_at', '>=', now()->subDays(30))
+            ->selectRaw('DATE(sold_at) as date, SUM(total_revenue) as revenue')
             ->groupBy('date')
             ->orderBy('date')
             ->get();
-
-        return response()->json($trend);
+        return response()->json($data);
     }
 
-    // 3. Revenue by Platform
-    public function revenueByPlatform()
-    {
-        $revenue = Order::select(
-                'platform_id',
-                DB::raw('SUM(total_harga) as total_revenue'),
-                DB::raw('COUNT(*) as total_orders')
-            )
-            ->with('platform:platform_id,nama')
-            ->groupBy('platform_id')
+    // GET /api/dashboard/revenue-by-platform
+    public function revenueByPlatform(Request $request) {
+        $userId = $request->user()->id;
+        $data = Sale::where('sales.user_id', $userId)
+            ->whereMonth('sold_at', now()->month)
+            ->join('platforms', 'sales.platform_id', '=', 'platforms.id')
+            ->selectRaw('platforms.name, platforms.color, SUM(sales.total_revenue) as revenue')
+            ->groupBy('platforms.id', 'platforms.name', 'platforms.color')
+            ->orderByDesc('revenue')
             ->get();
-
-        return response()->json($revenue);
+        return response()->json($data);
     }
 
-    // 4. Peak Sales Hours
-    public function peakHours()
-    {
-        $peak = Order::select(
-                DB::raw('HOUR(jam) as hour'),
-                DB::raw('COUNT(*) as total_orders'),
-                DB::raw('SUM(total_harga) as total_sales')
-            )
-            ->groupBy('hour')
-            ->orderBy('hour')
-            ->get();
-
-        return response()->json($peak);
-    }
-
-    // 5. Best Selling Products
-    public function bestProducts()
-    {
-        $products = Order_detail::select(
-                'product_id',
-                DB::raw('SUM(qty) as units_sold'),
-                DB::raw('SUM(total) as total_revenue')
-            )
-            ->with('product:product_id,nama,stok,status')
-            ->groupBy('product_id')
-            ->orderByDesc('units_sold')
+    // GET /api/dashboard/top-products
+    public function topProducts(Request $request) {
+        $userId = $request->user()->id;
+        $data = Sale::where('sales.user_id', $userId)
+            ->whereMonth('sold_at', now()->month)
+            ->join('platforms', 'sales.platform_id', '=', 'platforms.id')
+            ->selectRaw('product_name, platforms.name as platform,
+                platforms.color as platform_color,
+                SUM(quantity) as units, SUM(total_revenue) as revenue')
+            ->groupBy('product_name', 'platforms.name', 'platforms.color')
+            ->orderByDesc('revenue')
             ->limit(5)
             ->get();
-
-        return response()->json($products);
+        return response()->json($data);
     }
 
-    // 6. Low Stock Alert
-    public function lowStock()
-    {
-        $products = Product::where('stok', '<=', 10)->get();
-        return response()->json($products);
-    }
-
-    // 7. Platform Comparison
-    public function platformComparison()
-    {
-        $platforms = Platform::select(
-                'platforms.platform_id',
-                'platforms.nama',
-                'platforms.conversion_rate',
-                'platforms.fee_percentage',
-                DB::raw('SUM(orders.total_harga) as total_revenue'),
-                DB::raw('COUNT(orders.order_id) as total_orders')
-            )
-            ->leftJoin('orders', 'platforms.platform_id', '=', 'orders.platform_id')
-            ->groupBy(
-                'platforms.platform_id',
-                'platforms.nama',
-                'platforms.conversion_rate',
-                'platforms.fee_percentage'
-            )
-            ->get();
-
-        return response()->json($platforms);
+    // POST /api/dashboard/add-sale
+    public function addSale(Request $request) {
+        $validated = $request->validate([
+            'product_id'       => 'required|exists:products,id',
+            'platform_id'      => 'required|exists:platforms,id',
+            'product_name'     => 'required|string',
+            'product_category' => 'nullable|string',
+            'quantity'         => 'required|integer|min:1',
+            'price_per_unit'   => 'required|numeric',
+            'total_profit'     => 'required|numeric',
+            'sold_at'          => 'required|date',
+        ]);
+        $validated['user_id']       = $request->user()->id;
+        $validated['total_revenue'] = $validated['quantity'] * $validated['price_per_unit'];
+        $sale = Sale::create($validated);
+        return response()->json(['message' => 'Data berhasil ditambahkan', 'sale' => $sale], 201);
     }
 }

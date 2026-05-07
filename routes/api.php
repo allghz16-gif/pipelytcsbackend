@@ -1,37 +1,44 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\Order_detailController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\PlatformController;
-use App\Http\Controllers\SellerController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PlatformController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\SettingsController;
 
-// Auth routes
+// Publik
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login',    [AuthController::class, 'login']);
 
-// CRUD routes
-Route::apiResource('orders', OrderController::class);
-Route::apiResource('order-details', Order_detailController::class);
-Route::apiResource('products', ProductController::class);
-Route::apiResource('platforms', PlatformController::class);
-Route::apiResource('sellers', SellerController::class);
+// Butuh login
+Route::middleware('auth:sanctum')->group(function () {
 
-// Dashboard routes
-Route::prefix('dashboard')->group(function () {
-    Route::get('/summary',             [DashboardController::class, 'summary']);
-    Route::get('/sales-trend',         [DashboardController::class, 'salesTrend']);
-    Route::get('/revenue-by-platform', [DashboardController::class, 'revenueByPlatform']);
-    Route::get('/peak-hours',          [DashboardController::class, 'peakHours']);
-    Route::get('/best-products',       [DashboardController::class, 'bestProducts']);
-    Route::get('/low-stock',           [DashboardController::class, 'lowStock']);
-    Route::get('/platform-comparison', [DashboardController::class, 'platformComparison']);
-});
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/me',      [AuthController::class, 'me']);
 
-// Test route (hapus nanti)
-Route::get('/test', function() {
-    return App\Models\Order::first();
+    // Dashboard
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/overview',            [DashboardController::class, 'overview']);
+        Route::get('/sales-trend',         [DashboardController::class, 'salesTrend']);
+        Route::get('/revenue-by-platform', [DashboardController::class, 'revenueByPlatform']);
+        Route::get('/top-products',        [DashboardController::class, 'topProducts']);
+        Route::post('/add-sale',           [DashboardController::class, 'addSale']);
+    });
+
+    // Platform
+    Route::get('/platforms/comparison', [PlatformController::class, 'comparison']);
+    Route::get('/platforms/metrics',    [PlatformController::class, 'metrics']);
+
+    // Product
+    Route::get('/products',         [ProductController::class, 'index']);
+    Route::get('/products/heatmap', [ProductController::class, 'heatmap']);
+
+    // Campaign
+    Route::get('/campaigns',        [CampaignController::class, 'index']);
+    Route::get('/campaigns/funnel', [CampaignController::class, 'funnel']);
+
+    // Settings
+    Route::get('/settings', [SettingsController::class, 'index']);
+    Route::put('/settings', [SettingsController::class, 'update']);
 });

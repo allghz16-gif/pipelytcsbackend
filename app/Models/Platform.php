@@ -1,23 +1,16 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Platform extends Model
-{
-    protected $table      = 'platforms';
-    protected $primaryKey = 'platform_id';
+class Platform extends Model {
+    protected $fillable = ['name', 'slug', 'color'];
 
-    protected $fillable = [
-        'nama',
-        'conversion_rate',
-        'fee_percentage',
-    ];
+    public function sales() {
+        return $this->hasMany(Sale::class);
+    }
 
-    // Relasi ke Order
-    public function orders()
-    {
-        return $this->hasMany(Order::class, 'platform_id', 'platform_id');
+    public function campaigns() {
+        return $this->hasMany(Campaign::class);
     }
 }
