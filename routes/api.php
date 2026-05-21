@@ -19,6 +19,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Dashboard
     Route::prefix('dashboard')->group(function () {
+        Route::post('/simpan-data', [DashboardController::class, 'simpanData']);
+        Route::get('/dashboard-data', [DashboardController::class, 'dashboardData']);
         Route::get('/overview',            [DashboardController::class, 'overview']);
         Route::get('/sales-trend',         [DashboardController::class, 'salesTrend']);
         Route::get('/revenue-by-platform', [DashboardController::class, 'revenueByPlatform']);
