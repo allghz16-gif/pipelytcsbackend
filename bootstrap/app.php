@@ -17,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->statefulApi();
+        
+        //exclude CSRF untuk route API:
+        $middleware->validateCsrfTokens(except: [
+        'api/*'
+    ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

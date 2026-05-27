@@ -5,10 +5,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Campaign extends Model {
     protected $fillable = [
-        'user_id', 'platform_id', 'name',
-        'impressions', 'clicks', 'conversions',
-        'ad_spend', 'revenue', 'roas',
-        'period_start', 'period_end'
+        'user_id',
+        'platform_id',
+        'name',
+        'impressions',
+        'clicks',
+        'conversions',
+        'ad_spend',
+        'revenue',
+        'roas',
+        'period_start',
+        'period_end'
     ];
 
     protected $casts = [

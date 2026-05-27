@@ -61,8 +61,7 @@ class DatabaseSeeder extends Seeder {
 
             Sale::create([
                 'user_id'          => $user->id,
-                'product_id'       => $product->id,
-                'platform_id'      => $platform->id,
+                'platform_name'    => $platform->name,
                 'product_name'     => $product->name,
                 'product_category' => 'Electronics',
                 'quantity'         => $qty,
