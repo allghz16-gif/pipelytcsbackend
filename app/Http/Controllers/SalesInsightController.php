@@ -77,15 +77,15 @@ class SalesInsightController extends Controller {
 
         return response()->json([
             'metrics' => [
-                'avgOrderValue'   => number_format($aov),
-                'aovGrowth'       => ($aovGrowth >= 0 ? '+' : '') . $aovGrowth . '%',
-                'retention'       => '82.4',
-                'retentionGrowth' => '+3.1%',
-                'repeatRate'      => '45.6',
-                'repeatGrowth'    => '+2.8%',
-                'growthRate'      => $growthRate,
-                'growthPeriod'    => 'Monthly',
-            ],
+            'avgOrderValue'   => $aov,  // ← kirim angka, bukan string
+            'aovGrowth'       => ($aovGrowth >= 0 ? '+' : '') . $aovGrowth . '%',
+            'retention'       => '82.4',
+            'retentionGrowth' => '+3.1%',
+            'repeatRate'      => '45.6',
+            'repeatGrowth'    => '+2.8%',
+            'growthRate'      => $growthRate,
+            'growthPeriod'    => 'Monthly',
+           ],
             'revenue'   => $revenue,
             'category'  => $category,
             'retention' => $retention,
