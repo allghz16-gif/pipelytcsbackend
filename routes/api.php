@@ -7,6 +7,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SalesInsightController;
+use App\Http\Controllers\ForgotPasswordController;
 
 // Publik
 Route::post('/register', [AuthController::class, 'register']);
@@ -14,6 +15,7 @@ Route::post('/login',    [AuthController::class, 'login']);
 
 // Butuh login
 Route::middleware('auth:sanctum')->group(function () {
+Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me',      [AuthController::class, 'me']);
