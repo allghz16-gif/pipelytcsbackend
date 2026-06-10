@@ -54,7 +54,7 @@ class ProductController extends Controller {
                     'name'          => $p->name,
                     'sku'           => $p->sku ?? '-',
                     'platform'      => $p->platform,
-                    'platformColor' => $this->platformBgColors[$p->platform] ?? 'bg-purple-500',
+                    'platformColor' => $this->platformColors[$p->platform] ?? '#8B5CF6',
                     'sold'          => $sold,
                     'revenue'       => 'Rp ' . number_format($p->revenue, 0, ',', '.'),
                     'trend'         => $trend,

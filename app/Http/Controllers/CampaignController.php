@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Sale;
@@ -58,8 +59,11 @@ class CampaignController extends Controller
                     'clicks'      => number_format($click),
                     'ctr'         => $imp > 0 ? round($click / $imp * 100, 1) . '%' : '0%',
                     'conversions' => number_format($conv),
-                    'spend'       => '$' . number_format($spend, 2),
-                    'revenue'     => '$' . number_format($rev, 2),
+                    
+                    // KEMBALIKAN KE ANGKA MURNI (Tanpa embel-embel Rp atau $)
+                    'spend'       => $spend, 
+                    'revenue'     => $rev,
+                    
                     'roas'        => $roas . 'x',
                 ];
             })->values();

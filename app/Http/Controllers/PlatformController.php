@@ -49,7 +49,7 @@ class PlatformController extends Controller {
             'summary' => [
                 'bestPlatform' => [
                     'platform' => $best?->name ?? '-',
-                    'value'    => '$' . number_format($best?->revenue ?? 0),
+                    'value' => (float) ($best?->revenue ?? 0),
                     'desc'     => 'Daily Revenue',
                     'color'    => 'bg-orange-500',
                 ],
@@ -82,10 +82,10 @@ class PlatformController extends Controller {
             ]),
             'table_data' => $platforms->map(fn($p) => [
                 'platform'   => $p->name,
-                'revenue'    => '$' . number_format($p->revenue),
+                'revenue' => (float) $p->revenue,
                 'orders'     => number_format($p->orders),
                 'conversion' => round($p->orders / max($p->units, 1) * 100, 1) . '%',
-                'aov'        => '$' . number_format($p->aov),
+                'aov'     => round((float) $p->aov),
                 'growth'     => '+' . rand(5, 30) . '%',
             ]),
         ]);

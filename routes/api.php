@@ -46,4 +46,9 @@ Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'
     // Settings
     Route::get('/settings',  [SettingsController::class, 'index']);
     Route::put('/settings',  [SettingsController::class, 'update']);
+
+    // export data
+    Route::get('/settings/export-csv',   [SettingsController::class, 'exportCsv']);
+    Route::get('/settings/export-excel', [SettingsController::class, 'exportExcel']);
+    Route::get('/settings/export-pdf',   [SettingsController::class, 'exportPdf']);
 });
